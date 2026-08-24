@@ -334,6 +334,8 @@ variable:
     Disable GENERAL layout usage for supported hardware
   ``perfinfo``
     Log info when the driver notices perf issues
+  ``dummydes``
+    Always use dummy descriptors even if nullDescriptor feature is available
 
 Vulkan Validation Layers
 ^^^^^^^^^^^^^^^^^^^^^^^^

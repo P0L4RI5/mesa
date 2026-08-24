@@ -191,7 +191,7 @@ EXTENSIONS = [
               alias="rb2",
               properties=True,
               features=True,
-              conditions=["$feats.nullDescriptor"]),
+              conditions=["($feats.nullDescriptor && !(zink_debug & ZINK_DEBUG_DUMMYDES))"]),
     Extension("VK_EXT_image_robustness",
               alias="rb_image",
               features=True),

@@ -303,6 +303,9 @@ zink_clamp_void_swizzle(const struct util_format_description *desc, enum pipe_sw
 bool
 zink_resource_rebind(struct zink_context *ctx, struct zink_resource *res);
 
+struct zink_surface *
+zink_get_dummy_surface(struct zink_context *ctx, int samples_index);
+
 void
 zink_set_null_fs(struct zink_context *ctx);
 
