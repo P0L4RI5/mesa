@@ -62,6 +62,7 @@ struct ntv_info {
    } float_controls;
    uint32_t spirv_version;
    unsigned bindless_set_idx;
+   unsigned sampler_state_set_idx;
 };
 
 struct nir_shader;

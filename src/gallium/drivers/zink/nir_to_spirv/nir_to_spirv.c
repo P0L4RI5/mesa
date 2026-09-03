@@ -64,6 +64,7 @@ struct ntv_context {
    SpvId GLSL_std_450;
 
    mesa_shader_stage stage;
+   SpvId sampler_state_ssbo;
    const struct ntv_info *sinfo;
 
    SpvId ssbos[5]; //8, 16, 32, unused, 64
@@ -74,6 +75,7 @@ struct ntv_context {
    nir_variable *bindless_sampler_var[2];
    unsigned last_sampler;
    unsigned bindless_set_idx;
+   unsigned sampler_state_set_idx;
    nir_variable *image_var[PIPE_MAX_SHADER_IMAGES]; /* driver_location -> variable */
 
    SpvId entry_ifaces[PIPE_MAX_SHADER_INPUTS * 4 + PIPE_MAX_SHADER_OUTPUTS * 4];
@@ -1504,10 +1506,14 @@ emit_bo(struct ntv_context *ctx, struct nir_variable *var, bool aliased)
    unsigned idx = bitsize >> 4;
    assert(idx < ARRAY_SIZE(ctx->ssbos));
    if (ssbo && !ctx->sinfo->is_native_vulkan) {
-      assert(!ctx->ssbos[idx]);
-      ctx->ssbos[idx] = var_id;
-      if (bitsize == 32)
-         ctx->ssbo_vars = var;
+      if(var->data.descriptor_set != ctx->sampler_state_set_idx) {
+         assert(!ctx->ssbos[idx]);
+         ctx->ssbos[idx] = var_id;
+         if (bitsize == 32)
+            ctx->ssbo_vars = var;
+      } else {
+         ctx->sampler_state_ssbo = var_id;
+      }
    }
    if (ctx->spirv_1_4_interfaces) {
       assert(ctx->num_entry_ifaces < ARRAY_SIZE(ctx->entry_ifaces));
@@ -5053,6 +5059,7 @@ nir_to_spirv(struct nir_shader *s, const struct ntv_info *sinfo)
    ctx.have_spirv16 = sinfo->spirv_version >= SPIRV_VERSION(1, 6);
 
    ctx.bindless_set_idx = sinfo->bindless_set_idx;
+   ctx.sampler_state_set_idx = sinfo->sampler_state_set_idx;
    ctx.glsl_types[0] = _mesa_pointer_hash_table_create(ctx.mem_ctx);
    ctx.glsl_types[1] = _mesa_pointer_hash_table_create(ctx.mem_ctx);
    ctx.bo_array_types = _mesa_pointer_hash_table_create(ctx.mem_ctx);

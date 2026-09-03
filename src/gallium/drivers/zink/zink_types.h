@@ -89,7 +89,7 @@
 #define ZINK_MAX_BINDLESS_HANDLES 1024
 
 /* enum zink_descriptor_type */
-#define ZINK_MAX_DESCRIPTOR_SETS 6
+#define ZINK_MAX_DESCRIPTOR_SETS 7
 #define ZINK_MAX_DESCRIPTORS_PER_TYPE (32 * ZINK_GFX_SHADER_COUNT)
 /* Descriptor size reported by lavapipe. */
 #define ZINK_FBFETCH_DESCRIPTOR_SIZE 280
@@ -178,6 +178,7 @@ enum zink_descriptor_type {
    ZINK_DESCRIPTOR_TYPE_IMAGE,
    ZINK_DESCRIPTOR_BASE_TYPES, /**< the count/iterator for basic descriptor types */
    ZINK_DESCRIPTOR_BINDLESS,
+   ZINK_DESCRIPTOR_SAMPLER_STATE,
    ZINK_DESCRIPTOR_ALL_TYPES,
    ZINK_DESCRIPTOR_TYPE_UNIFORMS = ZINK_DESCRIPTOR_BASE_TYPES, /**< this is aliased for convenience */
    ZINK_DESCRIPTOR_NON_BINDLESS_TYPES = ZINK_DESCRIPTOR_BASE_TYPES + 1, /**< for struct sizing */
@@ -453,10 +454,14 @@ struct zink_descriptor_data {
 
    struct zink_descriptor_layout *dummy_dsl;
 
+   VkDescriptorSetLayout sampler_state_dsl;
+
    union {
       struct {
          VkDescriptorPool bindless_pool;
          VkDescriptorSet bindless_set;
+         VkDescriptorPool sampler_state_pool;
+         VkDescriptorSet sampler_state_ds;
       } t;
       struct {
          struct zink_resource *bindless_db;
@@ -465,6 +470,11 @@ struct zink_descriptor_data {
          uint32_t bindless_db_offsets[4];
          unsigned max_db_size;
          unsigned size_enlarge_scale;
+
+         VkDeviceSize sampler_state_ds_size, sampler_state_ds_offset;
+         struct zink_resource *sampler_state_db;
+         uint8_t *sampler_state_db_map;
+         struct pipe_transfer *sampler_state_db_xfer;
       } db;
    };
 
@@ -1596,12 +1606,21 @@ struct zink_surface {
    VkImageView image_view;
 };
 
+struct zink_gpu_sampler_state {
+   float border_color[4];
+   unsigned wrap;
+};
 
 /** context types */
 struct zink_sampler_state {
    VkSampler sampler;
    VkSampler sampler_clamped;
    bool custom_border_color;
+   union pipe_color_union border_color;
+   enum pipe_format border_color_format;
+   unsigned wrap_s:3;            /**< PIPE_TEX_WRAP_x */
+   unsigned wrap_t:3;            /**< PIPE_TEX_WRAP_x */
+   unsigned wrap_r:3;            /**< PIPE_TEX_WRAP_x */
    bool emulate_nonseamless;
 };
 
@@ -1848,7 +1867,11 @@ struct zink_context {
    bool vertex_buffers_dirty;
 
    struct zink_sampler_state *sampler_states[MESA_SHADER_MESH_STAGES][PIPE_MAX_SAMPLERS];
+   struct zink_gpu_sampler_state gpu_sampler_states[MESA_SHADER_MESH_STAGES][PIPE_MAX_SAMPLERS];
+   uint32_t sampler_dirty_flags[MESA_SHADER_MESH_STAGES];
    struct pipe_sampler_view *sampler_views[MESA_SHADER_MESH_STAGES][PIPE_MAX_SAMPLERS];
+   VkBuffer sampler_state_buffer;
+   struct zink_bo *sampler_state_bo;
 
    struct zink_viewport_state vp_state;
    bool vp_state_changed;

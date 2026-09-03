@@ -530,6 +530,13 @@ zink_batch_bind_db(struct zink_context *ctx)
       assert(infos[1].usage);
       count++;
    }
+   if (ctx->dd.db.sampler_state_db) {
+      infos[count].sType = VK_STRUCTURE_TYPE_DESCRIPTOR_BUFFER_BINDING_INFO_EXT;
+      infos[count].address = ctx->dd.db.sampler_state_db->obj->bda;
+      infos[count].usage = ctx->dd.db.sampler_state_db->obj->vkusage;
+      assert(infos[count].usage);
+      count++;
+   }
    VKSCR(CmdBindDescriptorBuffersEXT)(bs->cmdbuf, count, infos);
    VKSCR(CmdBindDescriptorBuffersEXT)(bs->reordered_cmdbuf, count, infos);
    bs->dd.db_bound = true;

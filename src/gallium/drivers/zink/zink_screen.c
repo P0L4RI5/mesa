@@ -2967,6 +2967,7 @@ zink_get_sample_pixel_grid(struct pipe_screen *pscreen, unsigned sample_count,
 static void
 init_driver_workarounds(struct zink_screen *screen)
 {
+   screen->info.have_EXT_custom_border_color = false;
    /* enable implicit sync for all non-mesa drivers */
    screen->driver_workarounds.implicit_sync = !zink_driver_is_venus(screen);
    switch (zink_driverid(screen)) {
@@ -3295,6 +3296,7 @@ init_optimal_keys(struct zink_screen *screen)
    screen->optimal_keys = !screen->need_decompose_attrs &&
                           screen->info.have_EXT_non_seamless_cube_map &&
                           screen->info.have_EXT_provoking_vertex &&
+                          screen->info.have_EXT_custom_border_color &&
                           !screen->driconf.inline_uniforms &&
                           /* Bypassing missing native line stippling support for Turnip as it shows no regressions */
                           (!screen->driver_workarounds.no_linestipple || zink_driverid(screen) == VK_DRIVER_ID_MESA_TURNIP) &&
@@ -3675,6 +3677,7 @@ zink_internal_create_screen(const struct pipe_screen_config *config, int64_t dev
       screen->desc_set_id[ZINK_DESCRIPTOR_TYPE_SAMPLER_VIEW] = 2;
       screen->desc_set_id[ZINK_DESCRIPTOR_TYPE_IMAGE] = 2;
       screen->desc_set_id[ZINK_DESCRIPTOR_BINDLESS] = 3;
+      screen->desc_set_id[ZINK_DESCRIPTOR_SAMPLER_STATE] = 4;
       screen->compact_descriptors = true;
    } else {
       screen->desc_set_id[ZINK_DESCRIPTOR_TYPE_UNIFORMS] = 0;
@@ -3683,6 +3686,7 @@ zink_internal_create_screen(const struct pipe_screen_config *config, int64_t dev
       screen->desc_set_id[ZINK_DESCRIPTOR_TYPE_SSBO] = 3;
       screen->desc_set_id[ZINK_DESCRIPTOR_TYPE_IMAGE] = 4;
       screen->desc_set_id[ZINK_DESCRIPTOR_BINDLESS] = 5;
+      screen->desc_set_id[ZINK_DESCRIPTOR_SAMPLER_STATE] = 6;
    }
 
    if (screen->info.have_EXT_calibrated_timestamps && !check_have_device_time(screen))
